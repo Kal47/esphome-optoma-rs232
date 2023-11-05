@@ -1,0 +1,187 @@
+esphome:
+  name: optoma
+  friendly_name: "Optoma Projector"
+  platform: espressif32 
+  board: esp32dev
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ""
+
+ota:
+  password: ""
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Optoma Remote Fallback"
+    password: "OhGodEverythingIsBroken"
+
+logger:
+  level: VERBOSE #makes uart stream available in esphome logstream
+  baud_rate: 0 #disable logging over uart
+
+uart:
+  tx_pin: 1
+  rx_pin: 3
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+debug: #this mess puts the RX data into projector_state 
+    direction: RX
+    dummy_receiver: true
+    after:
+      delimiter: "\r"
+    sequence:
+      - lambda: |-
+          UARTDebug::log_string(direction, bytes);  //Still log the data
+          std::string str(bytes.begin(), bytes.end());
+          id(projector_state).publish_state(str.c_str());
+          //this bad idea from https://community.home-assistant.io/t/help-with-sending-and-receiving-serial-data/440671/10
+          
+
+#Will send an "INFO#" and number when state changes
+text_sensor:
+- platform: template
+  name: "Projector State"
+  id: "projector_state"
+  filters:
+    - map: #change the values, it works dont judge me
+      - INFO0 -> Standby
+      - INFO1 -> Warming
+      - INFO2 -> Cooling
+      - INFO3 -> Out_of_Range
+      - INFO4 -> Lamp_Fail
+      - INFO5 -> Fan_Lock
+      - INFO6 -> Over_Temperature
+      - INFO7 -> Lamp_Hours_Running_Out
+
+#commands are formated as follows
+# '~' + projector_id + command_number + ' ' + (optinal)argument
+# projectors can be given an ID and be individual adressed
+# 00 id is for all which I will be using 
+# all commands end in \r or 0x0D
+
+binary_sensor:
+  - platform: template
+    name: "Power On"
+    on_press:
+    - template.write: "~0000 1\r"
+  - platform: template
+    name: "Power Off"
+    on_press:
+    - template.write: "~0000 0\r"
+
+  - platform: template
+    name: "Power Button"
+    on_press:
+    - template.write: "~00140 1\r"
+  - platform: template
+    name: "Command 2?"
+    on_press:
+    - template.write: "~00140 2\r"
+  - platform: template
+    name: "Mouse Up"
+    on_press:
+    - template.write: "~00140 3\r"
+  - platform: template
+    name: "Mouse Left"
+    on_press:
+    - template.write: "~00140 4\r"
+  - platform: template
+    name: "Mouse Enter"
+    on_press:
+    - template.write: "~00140 5\r"
+  - platform: template
+    name: "Mouse Right"
+    on_press:
+    - template.write:  "~00140 6\r"
+  - platform: template
+    name: "Mouse Down"
+    on_press:
+    - template.write:  "~00140 7\r"
+  - platform: template
+    name: "Mouse Left Click"
+    on_press:
+    - template.write:  "~00140 8\r"
+  - platform: template
+    name: "Mouse Right Click"
+    on_press:
+    - template.write:  "~00140 9\r"
+  - platform: template
+    name: "Up/Page +"
+    on_press:
+    - template.write:  "~00140 10\r"
+  - platform: template
+    name: "Left/Source"
+    on_press:
+    - template.write:  "~00140 11\r"
+  - platform: template
+    name: "Enter (for projection MENU)"
+    on_press:
+    - template.write:  "~00140 12\r"
+  - platform: template
+    name: "Right\re-SYNC"
+    on_press:
+    - template.write:  "~00140 13\r"
+  - platform: template
+    name: "Down/Page -"
+    on_press:
+    - template.write:  "~00140 14\r"
+  - platform: template
+    name: "Keystone +"
+    on_press:
+    - template.write:  "~00140 15\r"
+  - platform: template
+    name: "Keystone -"
+    on_press:
+    - template.write:  "~00140 16\r"
+  - platform: template
+    name: "Volume -"
+    on_press:
+    - template.write:  "~00140 17\r"
+  - platform: template
+    name: "Volume +"
+    on_press:
+    - template.write:  "~00140 18\r"
+  - platform: template
+    name: "(1) Brightness"
+    on_press:
+    - template.write:  "~00140 19\r"
+  - platform: template
+    name: "(2) Menu"
+    on_press:
+    - template.write:  "~00140 20\r"
+  - platform: template
+    name: "(3) 3D Zoom?"
+    on_press:
+    - template.write:  "~00140 21\r"
+  - platform: template
+    name: "(4) Contrast HDMI? DVI?"
+    on_press:
+    - template.write:  "~00140 22\r"
+  - platform: template
+    name: "(5) Freeze"
+    on_press:
+    - template.write:  "~00140 23\r"
+  - platform: template
+    name: "(6) AV Mute"
+    on_press:
+    - template.write:  "~00140 24\r"
+  - platform: template
+    name: "(7) S-Video"
+    on_press:
+    - template.write:  "~00140 25\r"
+  - platform: template
+    name: "(8) VGA"
+    on_press:
+    - template.write:  "~00140 26\r"
+  - platform: template
+    name: "(9) Video"
+    on_press:
+    - template.write: "~00140 27\r"
