@@ -1,0 +1,56 @@
+esphome:
+  name: esp-32-temp
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "1K8wCUpffYYQ8DGgCKRXFXUG7oemrmX08/evU3wnocw="
+
+ota:
+  password: "71df706d04355ad96380343e1ae94413"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "esp-32-temp Fallback Hotspot"
+    password: "aZElUEIgX86E"
+
+captive_portal:
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: bus_a
+
+sensor:
+  - platform: bme280
+    temperature:
+      name: "BME280 Temperature"
+      oversampling: 16x
+    pressure:
+      name: "BME280 Pressure"
+    humidity:
+      name: "BME280 Humidity"
+    address: 0x76
+    update_interval: 60s
+  - platform: dht
+    pin: 15
+    temperature:
+      name: "DHT22 Temperature"
+    humidity:
+      name: "DHT22 Humidity"
+    model: "AM2302"
+    update_interval: 60s
+
